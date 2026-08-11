@@ -1,34 +1,41 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, ConfigDict
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 
 
-class AnalysisBase(BaseModel):
-    overall_score: float = 0.0
-    quality_score: float = 0.0
-    depth_score: float = 0.0
-    consistency_score: float = 0.0
-    summary: Optional[str] = None
-    strengths: List[str] = []
-    areas_for_growth: List[str] = []
-    repo_breakdown: List[Dict[str, Any]] = []
-    language_stats: Dict[str, Any] = {}
-    status: str = "pending"
-
-
-class AnalysisCreate(BaseModel):
-    user_id: int
-
-
-class AnalysisRead(AnalysisBase):
-    id: int
-    user_id: int
-    created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
+class RepoData(BaseModel):
+    name: str
+    url: str
+    description: Optional[str] = None
+    stars: int
+    forks: int
+    is_fork: bool
+    language: Optional[str] = None
+    commit_count: int
+    pr_count: int
+    issue_count: int
+    has_tests: bool
+    has_ci: bool
+    has_docs: bool
 
 
 class AnalysisResponse(BaseModel):
-    status: str
-    analysis: Optional[AnalysisRead] = None
-    message: Optional[str] = None
+    id: int
+    user_id: int
+    code_quality_score: float
+    consistency_score: float
+    depth_score: float
+    production_readiness_score: float
+    overall_score: float
+    recruiter_summary: Optional[str] = None
+    strengths: Optional[List[str]] = None
+    weaknesses: Optional[List[str]] = None
+    recommendations: Optional[List[str]] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class AnalysisRequest(BaseModel):
+    force_refresh: bool = False

@@ -1,28 +1,30 @@
 from datetime import datetime
-from sqlalchemy import String, Integer, Float, DateTime, ForeignKey, JSON
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, ForeignKey
 from app.database import Base
 
 
 class Analysis(Base):
     __tablename__ = "analyses"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     
-    overall_score: Mapped[float] = mapped_column(Float, default=0.0)
-    quality_score: Mapped[float] = mapped_column(Float, default=0.0)
-    depth_score: Mapped[float] = mapped_column(Float, default=0.0)
-    consistency_score: Mapped[float] = mapped_column(Float, default=0.0)
+    # Raw data from GitHub
+    github_data = Column(JSON)  # Stores full repo list, commit counts, etc.
     
-    summary: Mapped[str] = mapped_column(String, nullable=True)
-    strengths: Mapped[dict] = mapped_column(JSON, default=list)
-    areas_for_growth: Mapped[dict] = mapped_column(JSON, default=list)
-    repo_breakdown: Mapped[dict] = mapped_column(JSON, default=list)
-    language_stats: Mapped[dict] = mapped_column(JSON, default=dict)
+    # Scores (0-100)
+    code_quality_score = Column(Float, default=0.0)
+    consistency_score = Column(Float, default=0.0)
+    depth_score = Column(Float, default=0.0)
+    production_readiness_score = Column(Float, default=0.0)
+    overall_score = Column(Float, default=0.0)
     
-    status: Mapped[str] = mapped_column(String, default="pending")  # pending, completed, failed
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-    # Relationships
-    user = relationship("User", back_populates="analyses")
+    # AI Summary
+    recruiter_summary = Column(String, nullable=True)
+    strengths = Column(JSON, nullable=True)  # List of strength points
+    weaknesses = Column(JSON, nullable=True)  # List of weakness points
+    recommendations = Column(JSON, nullable=True)  # List of recommendations
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
