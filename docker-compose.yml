@@ -2,9 +2,8 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
-    container_name: interviewsignal-db
-    restart: always
+    image: postgres:16-alpine
+    container_name: interviewsignal_db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -13,42 +12,56 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - interviewsignal_network
 
   redis:
     image: redis:7-alpine
-    container_name: interviewsignal-redis
-    restart: always
+    container_name: interviewsignal_redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - interviewsignal_network
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: interviewsignal-backend
-    restart: always
+    container_name: interviewsignal_backend
     environment:
+      - APP_SECRET_KEY=dev_secret_key_change_in_production
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/interviewsignal
       - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - FRONTEND_URL=http://localhost:5173
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend:/app
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: interviewsignal-frontend
-    restart: always
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - interviewsignal_network
 
 volumes:
   postgres_data:
+
+networks:
+  interviewsignal_network:
+    driver: bridge
