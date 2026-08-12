@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.analysis import Analysis
 from app.services.github_service import GitHubService
+from app.services.scoring_engine import ScoringEngine
 from app.routers.deps import get_current_user
 from app.schemas.analysis import AnalysisResponse, AnalysisRequest
 
@@ -47,20 +48,34 @@ async def trigger_analysis(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch GitHub data: {str(e)}")
     
-    # Create or update analysis (scoring happens in Module 4)
+    # Compute scores using the scoring engine
+    score_data = ScoringEngine.calculate_scores(github_data)
+
+    # Create or update analysis
     if existing:
         existing.github_data = github_data
+        existing.code_quality_score = score_data["code_quality_score"]
+        existing.consistency_score = score_data["consistency_score"]
+        existing.depth_score = score_data["depth_score"]
+        existing.production_readiness_score = score_data["production_readiness_score"]
+        existing.overall_score = score_data["overall_score"]
+        existing.strengths = score_data["strengths"]
+        existing.weaknesses = score_data["weaknesses"]
+        existing.recommendations = score_data["recommendations"]
         existing.updated_at = datetime.utcnow()
         analysis = existing
     else:
         analysis = Analysis(
             user_id=current_user.id,
             github_data=github_data,
-            code_quality_score=0.0,
-            consistency_score=0.0,
-            depth_score=0.0,
-            production_readiness_score=0.0,
-            overall_score=0.0,
+            code_quality_score=score_data["code_quality_score"],
+            consistency_score=score_data["consistency_score"],
+            depth_score=score_data["depth_score"],
+            production_readiness_score=score_data["production_readiness_score"],
+            overall_score=score_data["overall_score"],
+            strengths=score_data["strengths"],
+            weaknesses=score_data["weaknesses"],
+            recommendations=score_data["recommendations"],
         )
         db.add(analysis)
     
