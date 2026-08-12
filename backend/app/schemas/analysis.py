@@ -1,38 +1,35 @@
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
 
 
-class RepoData(BaseModel):
-    name: str
-    url: str
-    description: Optional[str] = None
-    stars: int
-    forks: int
-    is_fork: bool
-    language: Optional[str] = None
-    commit_count: int
-    pr_count: int
-    issue_count: int
-    has_tests: bool
-    has_ci: bool
-    has_docs: bool
+class AnalysisBase(BaseModel):
+    code_quality_score: float = 0.0
+    consistency_score: float = 0.0
+    depth_score: float = 0.0
+    production_readiness_score: float = 0.0
+    overall_score: float = 0.0
 
 
-class AnalysisResponse(BaseModel):
+class AnalysisCreate(AnalysisBase):
+    github_data: Optional[Dict[str, Any]] = None
+    recruiter_summary: Optional[str] = None
+    strengths: Optional[List[str]] = None
+    weaknesses: Optional[List[str]] = None
+    recommendations: Optional[List[str]] = None
+
+
+class AnalysisResponse(AnalysisBase):
     id: int
     user_id: int
-    code_quality_score: float
-    consistency_score: float
-    depth_score: float
-    production_readiness_score: float
-    overall_score: float
+    github_data: Optional[Dict[str, Any]] = None
     recruiter_summary: Optional[str] = None
     strengths: Optional[List[str]] = None
     weaknesses: Optional[List[str]] = None
     recommendations: Optional[List[str]] = None
     created_at: datetime
-    
+    updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
