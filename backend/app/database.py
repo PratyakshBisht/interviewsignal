@@ -1,19 +1,21 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
-from app.config import settings
 import logging
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 # Async engine with connection pooling
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=False,  # Set to True for SQL query debugging
+    echo=settings.DEBUG,  # Show SQL queries in debug mode
     pool_size=5,
     max_overflow=10,
     pool_pre_ping=True,  # Verify connections before using
-    pool_recycle=3600,  # Recycle connections after 1 hour
+    pool_recycle=3600,   # Recycle connections after 1 hour
+    # poolclass=NullPool,  # Use for development to avoid connection issues
 )
 
 # Async session factory
@@ -48,6 +50,7 @@ async def close_db():
         logger.info("Database connections closed")
     except Exception as e:
         logger.error(f"Error closing database: {e}")
+        raise
 
 
 # Dependency for FastAPI
