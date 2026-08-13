@@ -3,6 +3,16 @@ from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
 
 
+class RepoData(BaseModel):
+    name: str
+    language: Optional[str] = None
+    stars: int = 0
+    forks: int = 0
+    commit_count: int = 0
+    pr_count: int = 0
+    issue_count: int = 0
+
+
 class AnalysisBase(BaseModel):
     code_quality_score: float = 0.0
     consistency_score: float = 0.0

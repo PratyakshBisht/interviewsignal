@@ -1,12 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 import os
-from typing import Optional, List
+from typing import Optional
 
 
 class Settings(BaseSettings):
     # App Configuration
-    APP_SECRET_KEY: str = Field(default="dev_secret_key_change_in_production")
+    APP_SECRET_KEY: str = Field(default="dev_secret_key_change_in_production_1234567890")
     ALGORITHM: str = Field(default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=1440)  # 24 hours
     
@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     def validate_database_url(cls, v):
         if not v:
             raise ValueError("DATABASE_URL must be set")
+        if v.startswith("sqlite"):
+            return v
         if v.startswith("postgresql"):
             return v
         if v.startswith("postgres://"):
@@ -49,7 +51,7 @@ class Settings(BaseSettings):
     
     @field_validator("APP_SECRET_KEY")
     def validate_secret_key(cls, v):
-        if len(v) < 32 and not os.getenv("DEBUG", "").lower() == "true":
+        if len(v) < 32 and not os.getenv("DEBUG", "true").lower() == "true":
             raise ValueError("APP_SECRET_KEY must be at least 32 characters in production")
         return v
 
