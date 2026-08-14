@@ -1,58 +1,15 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export interface User {
-  id?: number;
-  username: string;
-  name?: string;
-  avatar_url?: string;
-  email?: string;
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import type { User } from '../types';
+import { authAPI } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
+  loading: boolean;
+  loginWithGithub: () => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('interviewsignal_token'));
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem('interviewsignal_user');
-    if (savedUser && token) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('Failed to parse user session', e);
-      }
-    }
-  }, [token]);
-
-  const login = (newToken: string, newUser: User) => {
-    localStorage.setItem('interviewsignal_token', newToken);
-    localStorage.setItem('interviewsignal_user', JSON.stringify(newUser));
-    setToken(newToken);
-    setUser(newUser);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('interviewsignal_token');
-    localStorage.removeItem('interviewsignal_user');
-    setToken(null);
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -60,4 +17,55 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchUserProfile();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await authAPI.getUserInfo();
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithGithub = async () => {
+    try {
+      const response = await authAPI.getGitHubAuthURL();
+      window.location.href = response.data.authorization_url;
+    } catch (error) {
+      console.error('GitHub login failed:', error);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    window.location.href = '/';
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, loginWithGithub, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
