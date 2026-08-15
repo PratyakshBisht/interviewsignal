@@ -1,67 +1,42 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: interviewsignal_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: interviewsignal
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - interviewsignal_network
-
-  redis:
-    image: redis:7-alpine
-    container_name: interviewsignal_redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - interviewsignal_network
-
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: interviewsignal_backend
+      dockerfile: docker/Dockerfile
+    image: interviewsignal-backend:latest
+    container_name: interviewsignal-backend
+    restart: unless-stopped
     environment:
-      - APP_SECRET_KEY=dev_secret_key_change_in_production
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/interviewsignal
-      - REDIS_URL=redis://redis:6379/0
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - FRONTEND_URL=http://localhost:5173
+      DATABASE_URL: sqlite+aiosqlite:///./interviewsignal.db
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-interviewsignal_development_secret_key_1234567890}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile
+    image: interviewsignal-frontend:latest
+    container_name: interviewsignal-frontend
+    restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    networks:
-      - interviewsignal_network
-
-volumes:
-  postgres_data:
-
-networks:
-  interviewsignal_network:
-    driver: bridge
+      - backend
+    ports:
+      - "5173:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

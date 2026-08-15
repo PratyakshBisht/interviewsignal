@@ -1,0 +1,42 @@
+name: Deploy InterviewSignal Frontend
+
+on:
+  push:
+    branches: [ main, production ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+      
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Build application
+        env:
+          VITE_API_BASE_URL: https://api.interviewsignal.app
+          VITE_ENVIRONMENT: production
+        run: |
+          cd frontend
+          npm run build
+      
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: frontend/dist/

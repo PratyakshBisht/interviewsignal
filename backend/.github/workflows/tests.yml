@@ -1,0 +1,38 @@
+name: Backend Tests & Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install httpx
+      
+      - name: Run API Verification Suite
+        env:
+          APP_SECRET_KEY: test_secret_key_12345678901234567890
+          GITHUB_CLIENT_ID: test
+          GITHUB_CLIENT_SECRET: test
+          OPENAI_API_KEY: test
+        run: |
+          cd backend
+          python test_api.py
