@@ -1,0 +1,17 @@
+{
+  "commits": [
+    { "date": "2024-01-15", "commits": 8, "lines_added": 245, "lines_deleted": 45 },
+    { "date": "2024-01-22", "commits": 12, "lines_added": 512, "lines_deleted": 89 },
+    { "date": "2024-01-29", "commits": 5, "lines_added": 128, "lines_deleted": 12 },
+    { "date": "2024-02-05", "commits": 15, "lines_added": 842, "lines_deleted": 156 },
+    { "date": "2024-02-12", "commits": 9, "lines_added": 342, "lines_deleted": 67 },
+    { "date": "2024-02-19", "commits": 11, "lines_added": 498, "lines_deleted": 92 },
+    { "date": "2024-02-26", "commits": 6, "lines_added": 167, "lines_deleted": 34 },
+    { "date": "2024-03-04", "commits": 14, "lines_added": 745, "lines_deleted": 128 }
+  ],
+  "repositories": [
+    { "name": "interviewsignal", "stars": 42, "forks": 12, "commits": 245 },
+    { "name": "secure-ai-guardian", "stars": 28, "forks": 8, "commits": 189 },
+    { "name": "personal-portfolio", "stars": 15, "forks": 3, "commits": 87 }
+  ]
+}

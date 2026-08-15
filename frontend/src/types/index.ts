@@ -25,6 +25,8 @@ export interface Analysis {
   recommendations: string[];
   created_at: string;
   updated_at: string;
+  github_data?: any;
+  analysis_version?: string;
 }
 
 export interface AuthResponse {
