@@ -1,0 +1,23 @@
+name: Daily Commit
+
+on:
+  schedule:
+    - cron: '20 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  daily-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update daily log
+        run: |
+          echo "Last daily update: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" > .daily_commit
+          git config --global user.name "Pratyaksh Bisht"
+          git config --global user.email "pratyakshbisht05@gmail.com"
+          git add .daily_commit
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: daily activity log update [$(date -u +'%Y-%m-%d')]" && git push)
